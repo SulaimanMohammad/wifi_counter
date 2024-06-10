@@ -52,3 +52,4 @@ for channel in "${channels[@]}"; do
    tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
 done
 
+awk '{if (!seen[$1] || $2 > seen[$1]) seen[$1] = $2} END {for (mac in seen) print mac, seen[mac]}' data.txt > unique.txt
