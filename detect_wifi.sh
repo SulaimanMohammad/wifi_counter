@@ -19,3 +19,12 @@ if ! command -v tshark &> /dev/null; then
     sudo usermod -a -G wireshark ${USER:-root}
     newgrp wireshark
 fi
+
+
+# Check if wlan1 is in monitor mode
+if ! iw wlan1 info | grep -q "type monitor"; then
+    echo "Setting wlan1 to monitor mode..."
+    sudo ifconfig wlan1 down
+    sudo iw wlan1 set monitor none
+    sudo ifconfig wlan1 up
+fi
