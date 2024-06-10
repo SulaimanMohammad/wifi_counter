@@ -20,7 +20,6 @@ if ! command -v tshark &> /dev/null; then
     newgrp wireshark
 fi
 
-
 # Check if wlan1 is in monitor mode
 if ! iw wlan1 info | grep -q "type monitor"; then
     echo "Setting wlan1 to monitor mode..."
@@ -28,3 +27,28 @@ if ! iw wlan1 info | grep -q "type monitor"; then
     sudo iw wlan1 set monitor none
     sudo ifconfig wlan1 up
 fi
+
+filename="data.txt"
+
+# Check if the file exists
+if [ -f "$filename" ]; then
+    # File exists, delete it
+    rm "$filename"
+fi
+
+# Create a new empty file
+touch "$filename"
+
+# Specify the channels to iterate over
+channels=(1 6 11) # 1 ,6,11 are the ones used by smartphones 
+
+# Loop through the channels
+for channel in "${channels[@]}"; do
+    echo "Switching to channel $channel..."
+    #sudo iwconfig wlan1 channel $channel
+    sudo iw dev wlan1 set channel $channel
+    # Capture packets on the current channel and append to data.txt
+    echo "Capturing packets on channel $channel..."
+   tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
+done
+
