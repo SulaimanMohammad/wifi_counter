@@ -1,14 +1,17 @@
 #!/bin/bash
 
 # Check if the correct number of arguments is provided
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <SCAN_TIME>"
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <SCAN_TIME> <RSSI_THRESHOLD>"
   exit 1
 fi
 
 # Get time of research
 PRIMARY_SCAN_TIME=$1  # For the main channels 1,6,11
 SECONDARY_SCAN_TIME=$(( SCAN_TIME / 4 ))  # For the rest of channels
+
+# Get the RSSI threshold from the first argument
+RSSI_THRESHOLD=$2
 
 # Check if OUI_table.txt and Non_phones_macs.txt do not exist
 if [ ! -f "OUI_table.txt" ] && [ ! -f "Non_phones_macs.txt" ]; then
@@ -55,22 +58,38 @@ SECONDARY_CHANNELS=(2 3 4 5 7 8 9 10)
 
 # Run tshark on primary channels for the full scan time
 for channel in "${PRIMARY_CHANNELS[@]}"; do
-    echo "Switching to channel $channel..."
-    #sudo iwconfig wlan1 channel $channel
-    sudo iw dev wlan1 set channel $channel
     # Capture packets on the current channel and append to data.txt
+    echo "Switching to channel $channel..."
+    sudo iw dev wlan1 set channel $channel
     echo "Capturing packets on channel $channel..."
-    tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
+
+    tshark -i wlan1  -a duration:$PRIMARY_SCAN_TIME -T fields -e wlan.sa -e wlan.seq -e radiotap.dbm_antsignal | \
+    awk -v threshold="$RSSI_THRESHOLD" '{
+        if ($3 ~ /,/) {
+        split($3, a, ",");
+        avg = (a[1] + a[2]) / 2;
+        if (avg > threshold)
+            print $1, $2
+        }
+    }' >> data.txt
 done
+
 
 # Run tshark on secondary channels for the calculated scan time
 for channel in "${SECONDARY_CHANNELS[@]}"; do
     echo "Switching to channel $channel..."
-    #sudo iwconfig wlan1 channel $channel
     sudo iw dev wlan1 set channel $channel
-    # Capture packets on the current channel and append to data.txt
     echo "Capturing packets on channel $channel..."
-    tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
+
+    tshark -i wlan1 -a duration:$SECONDARY_SCAN_TIME -T fields -e wlan.sa -e wlan.seq -e radiotap.dbm_antsignal | \
+    awk -v threshold="$RSSI_THRESHOLD" '{
+        if ($3 ~ /,/) {
+        split($3, a, ",");
+        avg = (a[1] + a[2]) / 2;
+        if (avg > threshold)
+            print $1, $2
+        }
+    }' >> data.txt
 done
 
 awk '{if (!seen[$1] || $2 > seen[$1]) seen[$1] = $2} END {for (mac in seen) print mac, seen[mac]}' data.txt > unique.txt
