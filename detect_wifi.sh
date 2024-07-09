@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 <SCAN_TIME>"
+  exit 1
+fi
+
+# Get time of research
+PRIMARY_SCAN_TIME=$1  # For the main channels 1,6,11
+SECONDARY_SCAN_TIME=$(( SCAN_TIME / 4 ))  # For the rest of channels
+
 # Check if OUI_table.txt and Non_phones_macs.txt do not exist
 if [ ! -f "OUI_table.txt" ] && [ ! -f "Non_phones_macs.txt" ]; then
     # Download the file and save it as OUI_table.txt
@@ -40,16 +50,27 @@ fi
 touch "$filename"
 
 # Specify the channels to iterate over
-channels=(1 6 11) # 1 ,6,11 are the ones used by smartphones 
+PRIMARY_CHANNELS=(1 6 11) # 1 ,6,11 are the ones used by smartphones
+SECONDARY_CHANNELS=(2 3 4 5 7 8 9 10)
 
-# Loop through the channels
-for channel in "${channels[@]}"; do
+# Run tshark on primary channels for the full scan time
+for channel in "${PRIMARY_CHANNELS[@]}"; do
     echo "Switching to channel $channel..."
     #sudo iwconfig wlan1 channel $channel
     sudo iw dev wlan1 set channel $channel
     # Capture packets on the current channel and append to data.txt
     echo "Capturing packets on channel $channel..."
-   tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
+    tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
+done
+
+# Run tshark on secondary channels for the calculated scan time
+for channel in "${SECONDARY_CHANNELS[@]}"; do
+    echo "Switching to channel $channel..."
+    #sudo iwconfig wlan1 channel $channel
+    sudo iw dev wlan1 set channel $channel
+    # Capture packets on the current channel and append to data.txt
+    echo "Capturing packets on channel $channel..."
+    tshark -i wlan1 -a duration:100 -T fields -e wlan.sa -e wlan.seq  >> data.txt
 done
 
 awk '{if (!seen[$1] || $2 > seen[$1]) seen[$1] = $2} END {for (mac in seen) print mac, seen[mac]}' data.txt > unique.txt
