@@ -37,11 +37,32 @@ def process_file(filename):
         updated_sequence = update_sequence_with_mac(data)
         return updated_sequence
 
+def detect_phones(filename, updated_sequence):
+    with open(filename, 'r') as file:
+        file_content = file.read()
+    '''
+    # Filter the list based on the presence of each MAC prefix in the file content
+    filtered_mac_prefixes_non_phone = [prefix for prefix in updated_sequence if prefix in file_content]
+    result_dict_non_phone = {prefix: len(num) for prefix, num in updated_sequence.items() if prefix in filtered_mac_prefixes_non_phone}
+    sum_values_non_phone = sum(result_dict_non_phone.values())
+    print("Number of non-phone devices:", sum_values_non_phone)
+    '''
+    # Filter the list based on absent of each MAC prefix in the file content, which means it is phone
+    filtered_mac_prefixes = [prefix for prefix in updated_sequence if prefix not in file_content]
+    result_dict = {prefix: len(num) for prefix, num in updated_sequence.items() if prefix in filtered_mac_prefixes}
+    sum_values = sum(result_dict.values())
+    return sum_values
+
 def main():
+
     # File contains unique MACs
     unique_mac = 'unique.txt'
     # Read the data from the file and update the sequence
     updated_sequence = process_file(unique_mac)
+    # File contains MACS of devices that are not phones
+    Non_phones_mac = 'Non_phones_macs.txt'
+    numebr_of_phones= detect_phones( Non_phones_mac, updated_sequence)
+    print( numebr_of_phones)
 
 if __name__ == "__main__":
     main()
