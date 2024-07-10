@@ -13,6 +13,10 @@ SECONDARY_SCAN_TIME=$(( SCAN_TIME / 4 ))  # For the rest of channels
 # Get the RSSI threshold from the first argument
 RSSI_THRESHOLD=$2
 
+# Change to the directory where the script is located (save all fils in this dir)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
 # Check if OUI_table.txt and Non_phones_macs.txt do not exist
 if [ ! -f "OUI_table.txt" ] && [ ! -f "Non_phones_macs.txt" ]; then
     # Download the file and save it as OUI_table.txt
@@ -46,6 +50,7 @@ filename="data.txt"
 if [ -f "$filename" ]; then
     # File exists, delete it
     rm "$filename"
+    rm unique.txt
 fi
 
 # Create a new empty file
