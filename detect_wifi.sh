@@ -39,6 +39,7 @@ fi
 
 # Check if wlan1 is in monitor mode
 if ! iw wlan1 info | grep -q "type monitor"; then
+    echo "Setting wlan1 to monitor mode..."
     sudo ifconfig wlan1 down
     sudo iw wlan1 set monitor none
     sudo ifconfig wlan1 up
@@ -63,6 +64,7 @@ SECONDARY_CHANNELS=(2 3 4 5 7 8 9 10)
 # Run tshark on primary channels for the full scan time
 for channel in "${PRIMARY_CHANNELS[@]}"; do
     # Capture packets on the current channel and append to data.txt
+    echo "Switching to channel $channel..."
     sudo iw dev wlan1 set channel $channel
     tshark -i wlan1  -a duration:$PRIMARY_SCAN_TIME -T fields -e wlan.sa -e wlan.seq -e radiotap.dbm_antsignal | \
     awk -v threshold="$RSSI_THRESHOLD" '{
@@ -78,6 +80,7 @@ done
 
 # Run tshark on secondary channels for the calculated scan time
 for channel in "${SECONDARY_CHANNELS[@]}"; do
+    echo "Switching to channel $channel..."
     sudo iw dev wlan1 set channel $channel
     tshark -i wlan1 -a duration:$SECONDARY_SCAN_TIME -T fields -e wlan.sa -e wlan.seq -e radiotap.dbm_antsignal | \
     awk -v threshold="$RSSI_THRESHOLD" '{
