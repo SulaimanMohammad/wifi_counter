@@ -5,6 +5,7 @@ This repository provides a method for estimating the number of people in a given
 - **Detect WiFi Signals:** Identifies and counts the number of phones by their WiFi signals.
 - **Automated Setup:** Configures the necessary environment and dependencies.
 - **Data Collection:** Gathers and processes WiFi signal data to estimate the number of people.
+- **Optimize Power Consumption**: Turn off the adapter when data collection is not active, and turn it on only when the data collection script is running.
 
 ## Requirements
 - Raspberry Pi
@@ -17,6 +18,12 @@ This repository provides a method for estimating the number of people in a given
       git clone https://github.com/SulaimanMohammad/wifi_counter.git
       cd wifi_counter
    ```
+3. Create sevice to manage powering on-off wifi adapter
+   ```bash
+      chmod +x create_disable_wifi_service.sh
+      ./create_disable_wifi_service.sh
+   ```
+
 2. Run the detect_wifi bash script to set up and start the detection process.
    ```bash
       ./detect_wifi.sh <scan_max_time> <RSSI>
@@ -30,8 +37,8 @@ This script automates the setup and execution of the WiFi-based people estimatio
 1. **Download OUI Table**: Retrieves the OUI table containing MAC addresses of various hardware manufacturers.
 2. **Filter Non-Phone MACs**: Extracts and saves MAC addresses of non-phone devices to `Non_phones_macs` file.
 3. **Install Tshark**: Checks if Tshark is installed and installs it if necessary.
-4. **Configure Wireless Adapter**: Sets the wireless adapter to monitoring mode.
-5. **Launch Tshark**: Starts Tshark to scan for WiFi beacons and probes.
+4. **Configure Wireless Adapter**: Turn on Wireless Adapter and Sets the wireless adapter to monitoring mode.
+5. **Launch Tshark**: Starts Tshark to scan for WiFi beacons and probes then turn off the adapter.
 6. **Analyes data**: Call a pythonn script to read `unique.txt` and retuen the number of phones found
 
 ## Data Collection Process
