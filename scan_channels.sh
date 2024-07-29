@@ -12,6 +12,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FILENAME="$SCRIPT_DIR/data.txt"
 FILENAME_UNIQUE="$SCRIPT_DIR/unique.txt"
 
+# Bring up WiFi interface
+ifconfig $INTERFACE up
+touch $FLAG_FILE
 
 # Set monitor mode if not already set
 if ! iw $INTERFACE info | grep -q "type monitor"; then
@@ -55,4 +58,7 @@ done
 # Process captured data
 awk '{if (!seen[$1] || $2 > seen[$1]) seen[$1] = $2} END {for (mac in seen) print mac, seen[mac]}' "$FILENAME" > "$FILENAME_UNIQUE"
 
+# Bring down WiFi interface
+ifconfig $INTERFACE down
+rm -f $FLAG_FILE
 
